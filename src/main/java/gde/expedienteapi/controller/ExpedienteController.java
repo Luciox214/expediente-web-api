@@ -7,6 +7,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/expedientes")
+@CrossOrigin(origins = "*")
 public class ExpedienteController {
 
     @Autowired
