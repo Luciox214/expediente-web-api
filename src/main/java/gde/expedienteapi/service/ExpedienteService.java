@@ -13,22 +13,26 @@ public class ExpedienteService {
     public List<Map<String, Object>> buscarExpediente(Integer anio, Integer numero, String codigo, int page, int size) {
 
         StringBuilder sql = new StringBuilder("""
-        SELECT 1+ed.POSICION,
-        'EX-' || ee.anio || '-' || ee.numero || '-' || ee.CODIGO_REPARTICION_ACTUACION || '-' ||
-        ee.CODIGO_REPARTICION_USUARIO AS expediente,
-        gd.numero,
-        d.MOTIVO,
-        d.FECHA_ASOCIACION,
-        d.FECHA_CREACION
-        FROM ee_ged.ee_expediente_electronico ee
-        LEFT JOIN ee_ged.EE_EXPEDIENTE_DOCUMENTOS ed ON ee.id = ed.id
-        LEFT JOIN ee_ged.documento d ON ed.ID_DOCUMENTO = d.id
-        LEFT JOIN gedo_ged.gedo_documento gd ON d.numero_sade = gd.numero
-        WHERE 1=1
-        """);
+    SELECT 1+ed.POSICION,
+    'EX-' || ee.anio || '-' || ee.numero || '-' || ee.CODIGO_REPARTICION_ACTUACION || '-' ||
+    ee.CODIGO_REPARTICION_USUARIO AS expediente,
+    ee.DESCRIPCION, 
+    ee.ESTADO, 
+    gd.numero,
+    d.MOTIVO,
+    d.FECHA_ASOCIACION,
+    d.FECHA_CREACION
+    FROM ee_ged.ee_expediente_electronico ee
+    LEFT JOIN ee_ged.EE_EXPEDIENTE_DOCUMENTOS ed ON ee.id = ed.id
+    LEFT JOIN ee_ged.documento d ON ed.ID_DOCUMENTO = d.id
+    LEFT JOIN gedo_ged.gedo_documento gd ON d.numero_sade = gd.numero
+    WHERE 1=1
+    """);
 
         List<Object> params = new ArrayList<>();
         sql.append(" AND ee.ES_RESERVADO <> 1");
+        //Cambiar a GER para la bd de Entre Ríos.
+        sql.append(" AND ee.CODIGO_REPARTICION_ACTUACION = 'GDEBA'");
 
         if (anio != null) {
             sql.append(" AND ee.anio = ?");
@@ -38,11 +42,13 @@ public class ExpedienteService {
             sql.append(" AND ee.numero = ?");
             params.add(numero);
         }
+
         if (codigo != null && !codigo.isBlank()) {
-            sql.append(" AND ee.CODIGO_REPARTICION_ACTUACION = ?");
-            params.add(codigo);
+            sql.append(" AND ee.CODIGO_REPARTICION_USUARIO = ?");
+            params.add(codigo.toUpperCase());
         }
-        sql.append(" ORDER BY d.FECHA_CREACION DESC");
+
+        sql.append(" ORDER BY ee.FECHA_CREACION DESC");
         sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
         params.add(page * size);
         params.add(size);
